@@ -1,12 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory - Shop Owner</title>
     <link rel="stylesheet" href="/shopowner/css/shop_inventory.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- inaddd ko lang to pwede mo din tanggalin pag eedit mo na -->
+    <style>
+        /* Add these styles to your existing CSS */
+        .shoe-thumbnail {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .no-image {
+            width: 50px;
+            height: 50px;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .variant-detail {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .variant-image {
+            max-width: 150px;
+            max-height: 150px;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+
+        .size-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .size-item {
+            padding: 0.3rem 0.6rem;
+            background: #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .shoe-main-info {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .main-shoe-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+        }
+
+        .variants-header {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+    </style>
 </head>
+
 <body>
     <div class="dashboard">
         <!-- Sidebar -->
@@ -40,7 +115,7 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- Main Content -->
         <div class="main-content">
             <div class="header">
@@ -60,15 +135,17 @@
                     <div id="shoeDetailsContent"></div>
                 </div>
             </div>
-            
+
             <!-- Confirmation Modal for Delete -->
             <div id="confirmationModal" class="confirmation-modal">
                 <div class="confirmation-content">
                     <h3>Confirm Deletion</h3>
                     <p>Are you sure you want to delete this shoe? This action cannot be undone.</p>
                     <div class="confirmation-buttons">
-                        <button class="btn btn-danger" onclick="confirmDelete()"><i class="fas fa-trash"> </i>Delete</button>
-                        <button class="btn btn-secondary" onclick="cancelDelete()"><i class="fas fa-times"></i> Cancel</button>
+                        <button class="btn btn-danger" onclick="confirmDelete()"><i class="fas fa-trash">
+                            </i>Delete</button>
+                        <button class="btn btn-secondary" onclick="cancelDelete()"><i class="fas fa-times"></i>
+                            Cancel</button>
                     </div>
                 </div>
             </div>
@@ -95,7 +172,7 @@
     </div>
 
     <script>
-        
+
         // document.addEventListener("DOMContentLoaded", () => {
         //     // Role-based access control
         //     const userRole = localStorage.getItem('userRole');
@@ -290,4 +367,5 @@
 
     <script src="/shopowner/js/shop_inventory.js" type="module"></script>
 </body>
+
 </html>

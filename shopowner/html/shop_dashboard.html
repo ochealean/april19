@@ -1,12 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Shop Owner</title>
     <link rel="stylesheet" href="/shopowner/css/shop_dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- pwede mo din tanggalin to -->
+    <style>
+        /* Product Cards */
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .shoe-thumbnail {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .no-image {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .product-info {
+            text-align: center;
+        }
+
+        .product-title {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-code,
+        .product-color {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.3rem;
+        }
+
+        .product-price {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+    </style>
 </head>
+
 <body>
     <div class="dashboard">
         <!-- Sidebar -->
@@ -40,7 +112,7 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- Main Content -->
         <div class="main-content">
             <div class="header">
@@ -55,32 +127,34 @@
                 <!-- Content will be populated by JavaScript -->
             </div>
 
-                <!-- Pending -->
-                <div id="status-message-pending" class="status-message pending">
-                    <span><strong>Thank you for registering!</strong>⏳ Your application is still under review. You will be notified once a decision has been made.</span>
-                </div>
+            <!-- Pending -->
+            <div id="status-message-pending" class="status-message pending">
+                <span><strong>Thank you for registering!</strong>⏳ Your application is still under review. You will be
+                    notified once a decision has been made.</span>
+            </div>
 
-                <!-- Approved -->
-                <div id="status-message-approved" class="status-message approved">
-                    <div>
-                        <strong>Congratulations!</strong> Your shop has been <strong>approved</strong>.
-                        You can now access all dashboard features including adding products and employees.
-                    </div>
+            <!-- Approved -->
+            <div id="status-message-approved" class="status-message approved">
+                <div>
+                    <strong>Congratulations!</strong> Your shop has been <strong>approved</strong>.
+                    You can now access all dashboard features including adding products and employees.
                 </div>
+            </div>
 
-                <!-- Rejected -->
-                <div id="status-message-reject" class="status-message rejected">
-                    <div>
-                        <strong>We're sorry.</strong> Your shop registration has been <strong>rejected</strong> due to the following reasons:
-                        <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
-                            <li>Invalid or incomplete business permit.</li>
-                            <li>Shop description is too vague.</li>
-                        </ul>
-                        <p style="margin-top: 0.5rem;">Please review and update your details, then re-apply.</p>
-                    </div>
-                    <button class="reapply-btn">Reapply</button>
+            <!-- Rejected -->
+            <div id="status-message-reject" class="status-message rejected">
+                <div>
+                    <strong>We're sorry.</strong> Your shop registration has been <strong>rejected</strong> due to the
+                    following reasons:
+                    <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                        <li>Invalid or incomplete business permit.</li>
+                        <li>Shop description is too vague.</li>
+                    </ul>
+                    <p style="margin-top: 0.5rem;">Please review and update your details, then re-apply.</p>
                 </div>
-            
+                <button class="reapply-btn">Reapply</button>
+            </div>
+
             <!-- Stats Cards -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -100,7 +174,7 @@
                     <div class="value">1,240</div>
                 </div>
             </div>
-            
+
             <!-- Recent Orders -->
             <h2 class="section-title">Recent Orders</h2>
             <table class="order-table">
@@ -133,7 +207,7 @@
                     </tr>
                 </tbody>
             </table>
-            
+
             <!-- Top Products -->
             <h2 class="section-title">Top Products</h2>
             <div class="product-list">
@@ -170,7 +244,7 @@
 
         </div>
     </div>
-
+    <!-- 
     <script>
         // Example: get the user role from localStorage or backend
         const userRole = localStorage.getItem('userRole'); // "employee", "manager", "owner"
@@ -239,8 +313,9 @@
             window.location.href = 'shop_inventory.html';
         }
     </script>
-      
+       -->
     <!-- nagadd ng script -->
     <script src="/shopowner/js/shop_dashboard.js" type="module"></script>
 </body>
+
 </html>

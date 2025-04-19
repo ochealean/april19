@@ -19,63 +19,84 @@ const db = getDatabase(app);
 
 let shopLoggedin;
 
-// Add this at the top to expose functions to global scope
+// Expose functions to global scope
 window.showShoeDetails = showShoeDetails;
 window.editShoe = editShoe;
 window.promptDelete = promptDelete;
 window.closeModal = closeModal;
+window.addNewShoe = addNewShoe;
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
         shopLoggedin = user.uid;
-        loadShops('inventoryTableBody'); // Load shops after authentication
+        loadInventory('inventoryTableBody');
     } else {
-        window.location.href = "/admin/html/admin_login.html";
+        window.location.href = "/user_login.html";
     }
 });
 
-// Modified loadShops function
-function loadShops(tableBodyId) {
-    const shopsRef = ref(db, `AR_shoe_users/shoe/${shopLoggedin}`);
+function addNewShoe() {
+    window.location.href = "/shopowner/html/shopowner_addshoe.html";
+}
+
+function loadInventory(tableBodyId) {
+    const inventoryRef = ref(db, `AR_shoe_users/shoe/${shopLoggedin}`);
     const tbody = document.getElementById(tableBodyId);
 
     if (!tbody) return;
 
-    onValue(shopsRef, (snapshot) => {
+    onValue(inventoryRef, (snapshot) => {
         tbody.innerHTML = '';
 
         if (!snapshot.exists()) {
-            tbody.innerHTML = `<tr><td colspan="7">No shoes found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7">No shoes found in inventory</td></tr>`;
             return;
         }
 
         snapshot.forEach((childSnapshot) => {
             const shoe = childSnapshot.val();
-            const row = createShopRow(childSnapshot.key, shoe);
+            const row = createInventoryRow(childSnapshot.key, shoe);
             tbody.appendChild(row);
         });
     });
 }
 
-function createShopRow(shoeId, shoe) {
+function createInventoryRow(shoeId, shoe) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
     row.setAttribute('data-id', shoeId);
 
-    // Calculate total stock if available
-    let totalStock = 'N/A';
-    if (shoe.stock && Array.isArray(shoe.stock)) {
-        totalStock = shoe.stock.reduce((sum, item) => sum + parseInt(item), 0);
+    // Calculate total stock from all variants
+    let totalStock = 0;
+    if (shoe.variants && Array.isArray(shoe.variants)) {
+        shoe.variants.forEach(variant => {
+            if (variant.sizes && Array.isArray(variant.sizes)) {
+                variant.sizes.forEach(size => {
+                    totalStock += parseInt(size.stock) || 0;
+                });
+            }
+        });
     }
 
+    // Format date
+    const addedDate = shoe.dateAdded ? new Date(shoe.dateAdded).toLocaleDateString() : 'N/A';
+
+    // Get first variant for display
+    const firstVariant = shoe.variants && shoe.variants[0] ? shoe.variants[0] : null;
+    const price = firstVariant ? `$${firstVariant.price}` : 'N/A';
+
     row.innerHTML = `
-        <td>${shoe.variantImage ? '...' : 'No Image'}</td>
+        <td>
+            ${shoe.defaultImage ? 
+                `<img src="${shoe.defaultImage}" alt="${shoe.shoeName}" class="shoe-thumbnail">` : 
+                '<div class="no-image">No Image</div>'}
+        </td>
         <td>${shoe.shoeName || 'N/A'}</td>
         <td>${shoe.shoeCode || 'N/A'}</td>
-        <td>$${shoe.price || 'No description'}</td>
-        <td>${shoe.totalStock || 'N/A'}</td>
-        <td>${shoe.addedTime || 'N/A'}</td>
-        <td>
+        <td>${price}</td>
+        <td>${totalStock}</td>
+        <td>${addedDate}</td>
+        <td class="action-buttons">
             <button class="btn btn-view" onclick="showShoeDetails('${shoeId}')">
                 <i class="fas fa-eye"></i> View
             </button>
@@ -90,10 +111,10 @@ function createShopRow(shoeId, shoe) {
     return row;
 }
 
-// Modified showShoeDetails function
 function showShoeDetails(shoeId) {
-    // Use the correct path including shop ID
     const shoeRef = ref(db, `AR_shoe_users/shoe/${shopLoggedin}/${shoeId}`);
+    const modalContent = document.getElementById('shoeDetailsContent');
+    const modalElement = document.getElementById('shoeDetailsModal');
 
     onValue(shoeRef, (snapshot) => {
         const shoe = snapshot.val();
@@ -102,38 +123,58 @@ function showShoeDetails(shoeId) {
             return;
         }
 
-        // Ensure modal elements exist
-        const modalContent = document.getElementById('shoeDetailsContent');
-        const modalElement = document.getElementById('shoeDetailsModal');
+        // Format date
+        const addedDate = shoe.dateAdded ? new Date(shoe.dateAdded).toLocaleString() : 'N/A';
 
-        if (!modalContent || !modalElement) {
-            console.error('Modal elements not found in DOM');
-            return;
-        }
-
+        // Generate variants HTML
         let variantsHtml = '';
-        if (shoe.variantName && shoe.color && shoe.price) {
-            variantsHtml = `
-                <div class="variant-detail">
-                    <h4>${shoe.variantName} (${shoe.color})</h4>
-                    <p><strong>Price:</strong> $${shoe.price}</p>
-                    ${shoe.variantImage ? `<img src="${shoe.variantImage}" alt="${shoe.variantName}" style="max-width:100px; margin:0.5rem 0;">` : ''}
-                </div>
-                <hr style="margin-top: 1rem; margin-bottom: 1rem;">
-            `;
+        if (shoe.variants && Array.isArray(shoe.variants)) {
+            shoe.variants.forEach((variant, index) => {
+                let sizesHtml = '';
+                if (variant.sizes && Array.isArray(variant.sizes)) {
+                    sizesHtml = variant.sizes.map(size => 
+                        `<div class="size-item">Size ${size.size}: ${size.stock} in stock</div>`
+                    ).join('');
+                }
+
+                variantsHtml += `
+                    <div class="variant-detail">
+                        <h4>${variant.variantName || 'Variant'} (${variant.color || 'No color'})</h4>
+                        <p><strong>Price:</strong> $${variant.price || '0.00'}</p>
+                        ${variant.imageUrl ? 
+                            `<img src="${variant.imageUrl}" alt="${variant.variantName}" class="variant-image">` : 
+                            '<p>No variant image</p>'}
+                        <div class="size-container">${sizesHtml}</div>
+                    </div>
+                    ${index < shoe.variants.length - 1 ? '<hr>' : ''}
+                `;
+            });
         }
 
         modalContent.innerHTML = `
             <div class="modal-header">
-                <h2>Shoe Name: ${shoe.shoeName || 'N/A'}</h2>
-                <h3>Shoe Code: ${shoe.shoeCode || 'N/A'}</h3>
+                <h2>${shoe.shoeName || 'Shoe Details'}</h2>
                 <button onclick="closeModal()" class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <p><strong>Description:</strong> ${shoe.generalDescription || 'No description'}</p>
-                ${shoe.defaultImage ? `<img src="${shoe.defaultImage}" alt="${shoe.shoeCode}" style="max-width:100%; margin:1rem 0; border-radius:8px;">` : ''}
-                <h3 style="margin-top:1.5rem;">Variants</h3>
-                ${variantsHtml}
+                <div class="shoe-main-info">
+                    <div class="shoe-image-container">
+                        ${shoe.defaultImage ? 
+                            `<img src="${shoe.defaultImage}" alt="${shoe.shoeName}" class="main-shoe-image">` : 
+                            '<p>No main image</p>'}
+                    </div>
+                    <div class="shoe-text-info">
+                        <p><strong>Code:</strong> ${shoe.shoeCode || 'N/A'}</p>
+                        <p><strong>Added:</strong> ${addedDate}</p>
+                        <p><strong>Description:</strong></p>
+                        <p>${shoe.generalDescription || 'No description available'}</p>
+                    </div>
+                </div>
+                
+                <h3 class="variants-header">Variants</h3>
+                <div class="variants-container">
+                    ${variantsHtml || '<p>No variants available</p>'}
+                </div>
             </div>
         `;
 
@@ -145,7 +186,6 @@ function showShoeDetails(shoeId) {
     });
 }
 
-// Modal and delete functions
 function closeModal() {
     document.getElementById('shoeDetailsModal').classList.remove('show');
     document.body.classList.remove('modal-open');
@@ -158,19 +198,19 @@ function promptDelete(shoeId) {
 }
 
 function deleteShoe(shoeId) {
-    const shoeRef = ref(db, `AR_shoe_users/shoe/${shopLoggedin}/` + shoeId);
+    const shoeRef = ref(db, `AR_shoe_users/shoe/${shopLoggedin}/${shoeId}`);
     remove(shoeRef)
         .then(() => {
-            alert("Data deleted successfully!");
+            alert("Shoe deleted successfully!");
         })
         .catch((error) => {
-            console.error("Error deleting data:", error);
+            console.error("Error deleting shoe:", error);
+            alert("Error deleting shoe: " + error.message);
         });
 }
 
-// Edit function
 function editShoe(shoeId) {
-    window.location.href = `/shopowner/shopowner_addshoe.html?edit=${shoeId}`;
+    window.location.href = `/shopowner/html/shopowner_addshoe.html?edit=${shoeId}`;
 }
 
 // Initialize when DOM is loaded
@@ -189,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('#inventoryTable tbody tr').forEach(row => {
             const name = row.children[1]?.textContent.toLowerCase() || '';
             const code = row.children[2]?.textContent.toLowerCase() || '';
-            row.style.display = (name.includes(term)) || (code.includes(term)) ? '' : 'none';
+            row.style.display = (name.includes(term) || code.includes(term)) ? '' : 'none';
         });
     });
 });
