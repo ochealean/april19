@@ -71,6 +71,7 @@ function showNotification(message, type) {
     }, 3000);
 }
 
+
 function updateDialogContent(shop, actionType, currentRow) {
     const dialogMessage = document.getElementById("dialogMessage");
     const confirmBtn = document.getElementById("confirmAction");
@@ -107,10 +108,12 @@ function showDialog() {
     overlay?.classList.add("show");
 }
 
-function showModalfunc() {
-    modal?.classList.add("show");
-    overlay?.classList.add("show");
-}
+// supposedly 2 dapat yung balak ko dati showDialog and showModal pero pinagisa na lang ni deepseek kaya useless na to
+// yung modal feeling ko wala na sya gamit kasi eto na id nya --> shopDetailsModal
+// function showModalfunc() {
+//     modal?.classList.add("show");
+//     overlay?.classList.add("show");
+// }
 
 function hideDialog() {
     document.getElementById('shopDetailsModal')?.classList.remove('show');
@@ -315,6 +318,7 @@ function showConfirmationDialog(e, actionType) {
     }, { onlyOnce: true });
 }
 
+// ito yung nagdidisplay or nagloload ng value mula firebase into html, kumbaga sya yung kumukuha ng lahat ng values sa database at ididisplay nya sa html
 function loadShops(status, tableBodyId) {
     const shopsRef = ref(db, 'AR_shoe_users/shop');
     const tbody = document.getElementById(tableBodyId);
@@ -345,6 +349,7 @@ function loadShops(status, tableBodyId) {
     });
 }
 
+// ito yung makikita sa loadShops()
 function createShopRow(shopId, shop, status) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
@@ -380,6 +385,7 @@ function createShopRow(shopId, shop, status) {
 }
 
 // --- Event Listeners ---
+// nandito lahat ng function
 function initializeEventListeners() {
     document.getElementById('closeShopModal')?.addEventListener('click', function () {
         document.getElementById('shopDetailsModal').classList.remove('show');

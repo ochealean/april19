@@ -171,7 +171,7 @@ registerButton.addEventListener('click', async (event) => {
         // Clear previous errors
         document.querySelectorAll('.error-message').forEach(el => el.remove());
         document.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
-        
+
         // Validate all fields
         const errors = [];
         const requiredFields = [
@@ -228,26 +228,27 @@ registerButton.addEventListener('click', async (event) => {
         }
 
         // Validate file uploads
-        const validateFileUpload = (id, name) => {
-            const fileInput = document.getElementById(id);
-            if (fileInput.files.length === 0) {
-                errors.push(`${name} is required`);
-                showFieldError(fileInput, `${name} is required`);
-                return;
-            }
-            
-            const file = fileInput.files[0];
-            if (file.size > 5 * 1024 * 1024) {
-                errors.push(`${name} file size exceeds 5MB limit`);
-                showFieldError(fileInput, 'File size exceeds 5MB limit');
-            }
-            
-            const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-            if (!validTypes.includes(file.type)) {
-                errors.push(`${name} invalid file type`);
-                showFieldError(fileInput, 'Only JPEG, PNG, or PDF files are allowed');
-            }
-        };
+        // di na nagagamit kasi error to kapag ginamit
+        // const validateFileUpload = (id, name) => {
+        //     const fileInput = document.getElementById(id);
+        //     if (fileInput.files.length === 0) {
+        //         errors.push(`${name} is required`);
+        //         showFieldError(fileInput, `${name} is required`);
+        //         return;
+        //     }
+
+        //     const file = fileInput.files[0];
+        //     if (file.size > 5 * 1024 * 1024) {
+        //         errors.push(`${name} file size exceeds 5MB limit`);
+        //         showFieldError(fileInput, 'File size exceeds 5MB limit');
+        //     }
+
+        //     const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        //     if (!validTypes.includes(file.type)) {
+        //         errors.push(`${name} invalid file type`);
+        //         showFieldError(fileInput, 'Only JPEG, PNG, or PDF files are allowed');
+        //     }
+        // };
 
         // error message lang to kaya commented
         // validateFileUpload('ownerIdFront', 'Front ID');
@@ -282,14 +283,33 @@ registerButton.addEventListener('click', async (event) => {
         // Create user and upload files
         const userCredential = await createUserWithEmailAndPassword(auth, ownerEmailVal, passwordVal);
         const user = userCredential.user;
-        
+
         await updateProfile(user, { displayName: usernameVal });
-        await set(dbRef(db, `AR_shoe_users/shop/${user.uid}`), { /* your data object */ });
+        await set(dbRef(db, `AR_shoe_users/shop/${user.uid}`), {
+            username: usernameVal,
+            email: ownerEmailVal,
+            status: 'pending',
+            ownerName: ownerName.value,
+            shopName: shopName.value,
+            shopCategory: shopCategory.value,
+            shopDescription: shopDescription.value,
+            yearsInBusiness: yearsInBusiness.value,
+            ownerPhone: ownerPhone.value,
+            shopAddress: shopAddress.value,
+            shopCity: shopCity.value,
+            shopState: shopState.value,
+            shopZip: shopZip.value,
+            shopCountry: shopCountry.value,
+            dateProcessed: dateProcessed,
+            // userName: usernamee.value,
+            dateApproved: '',
+            dateRejected: '',
+        });
         await uploadBothFiles(user.uid, permitDocumentfile, licensePreviewfile, frontSidefile, backSidefile);
-        
+
         // Send verification email
         await sendEmailVerification(user);
-        
+
         hideLoader();
         setButtonAble();
         showSuccessOverlay();
@@ -306,7 +326,7 @@ registerButton.addEventListener('click', async (event) => {
 function showFieldError(field, message) {
     const formGroup = field.closest('.form-group');
     formGroup?.classList.add('error');
-    
+
     const errorElement = document.createElement('span');
     errorElement.className = 'error-message';
     errorElement.textContent = message;
