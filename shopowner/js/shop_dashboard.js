@@ -25,11 +25,38 @@ window.viewShoeDetails = viewShoeDetails;
 onAuthStateChanged(auth, (user) => {
     if (user) {
         shopLoggedin = user.uid;
+        // checkShopStatus();
         loadShopDashboard();
     } else {
         window.location.href = "/user_login.html";
     }
 });
+
+// function checkShopStatus() {
+//     const shopStatusRef = ref(db, `AR_shoe_users/shop/${shopLoggedin}/status`);
+    
+//     onValue(shopStatusRef, (snapshot) => {
+//         if (snapshot.exists()) {
+//             const status = snapshot.val();
+//             if (status === 'pending' || status === 'rejected') {
+//                 redirectBasedOnStatus(status);
+//             } else {
+//                 loadShopDashboard();
+//             }
+//         } else {
+//             console.error("Shop status not found.");
+//             window.location.href = "/user_login.html";
+//         }
+//     });
+// }
+
+function redirectBasedOnStatus(status) {
+    if (status === 'pending') {
+        window.location.href = "/shopowner/html/shop_pending.html"; // Redirect to pending page
+    } else if (status === 'rejected') {
+        window.location.href = "/shopowner/html/shop_rejected.html"; // Redirect to rejected page
+    }
+}
 
 function loadShopDashboard() {
     loadShopStats();

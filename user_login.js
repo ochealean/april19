@@ -80,7 +80,7 @@ loginButton_customer.addEventListener('click', (event) => {
                     .then((snapshot) => {
                         if (snapshot.exists()) {
                             alert("Login successful");
-                            window.location.href = "customer_dashboard.html";
+                            window.location.href = "/customer/html/customer_dashboard.html";
                         } else {
                             alert("Account does not exist");
                             auth.signOut();
@@ -110,8 +110,8 @@ loginButton_shop.addEventListener('click', (event) => {
                 get(ref(db, `AR_shoe_users/shop/${user.uid}`))
                     .then((snapshot) => {
                         if (snapshot.exists()) {
-                            alert("Login successful");
-                            window.location.href = "/shopowner/html/shop_dashboard.html";
+                            // Check shop status after successful login
+                            checkShopStatus(user.uid);
                         } else {
                             alert("Account does not exist");
                             auth.signOut();
@@ -126,6 +126,38 @@ loginButton_shop.addEventListener('click', (event) => {
             alert("Wrong email or password. Please try again.");
         });
 });
+
+// Function to check shop status
+function checkShopStatus(uid) {
+    const shopStatusRef = ref(db, `AR_shoe_users/shop/${uid}/status`);
+    
+    get(shopStatusRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const status = snapshot.val();
+            console.log("Shop status:", status); // Debugging line
+            if (status === 'pending') {
+                console.log("Shop status:", status); // Debugging line
+                window.location.href = "shopowner/html/shop_pending.html"; // Redirect to pending page
+            } else if (status === 'rejected') {
+                console.log("Shop status:", status); // Debugging line
+                window.location.href = "shopowner/html/shop_rejected.html"; // Redirect to rejected page
+            } else {
+                // If approved, redirect to the shop dashboard
+                window.location.href = "shopowner/html/shop_dashboard.html";
+            }
+        } else {
+            console.error("Shop status not found.");
+            alert("Shop status not found. Please contact support.");
+            auth.signOut();
+            window.location.href = "user_login.html";
+        }
+    }).catch((error) => {
+        console.error("Error fetching shop status:", error);
+        alert("An error occurred while checking shop status. Please try again.");
+        auth.signOut();
+        window.location.href = "user_login.html";
+    });
+}
 
 document.getElementById('forgotPass_shop').addEventListener('click', async (event) => {
     event.preventDefault();
