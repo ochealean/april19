@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pending Shops - Admin</title>
     <link rel="stylesheet" href="/admin/css/admin_pendingshops.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 </head>
 
@@ -16,15 +16,27 @@
     <div id="notification" class="notification"></div>
 
     <!-- Confirmation Dialog -->
-    <!-- binago ko to -->
     <div id="confirmationDialog" class="confirmation-dialog">
         <p id="dialogMessage">Are you sure you want to perform this action?</p>
         <div id="rejectionReasonContainer" style="display: none; margin: 10px 0;">
-            <textarea id="rejectionReason" placeholder="Enter rejection reason..." cols="50" rows="5"></textarea>
+            <textarea id="rejectionReason" placeholder="Enter rejection reason..." cols="50" rows="5" class="rejection-reason"></textarea>
         </div>
         <div class="confirmation-buttons">
             <button id="cancelAction" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
             <button id="confirmAction" class="reject-btn"><i class="fas fa-check"></i> <span class="action-text">Confirm</span></button>
+        </div>
+    </div>
+
+    <!-- Shop Details Modal -->
+    <div id="shopDetailsModal" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalShopName">Shop Details</h2>
+                <button id="closeShopModal" class="close-modal">&times;</button>
+            </div>
+            <div id="modalShopContent" class="modal-body">
+                <!-- Dynamic content will load here -->
+            </div>
         </div>
     </div>
 

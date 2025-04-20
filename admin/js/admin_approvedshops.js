@@ -24,54 +24,84 @@ const dialog = document.getElementById("confirmationDialog");
 const overlay = document.getElementById("overlay");
 
 // Confirm action handler
-    // Update the confirm action handler
-    document.getElementById("confirmAction")?.addEventListener("click", function() {
-        if (!currentAction || !currentShopId) return;
-        
-        const shopRef = ref(db, `AR_shoe_users/shop/${currentShopId}`);
-        const updateData = {
-            status: currentAction === "approve" ? "approved" : "rejected",
-            dateProcessed: new Date().toISOString(),  // Update existing dateProcessed
-            ...(currentAction === "reject" && { dateRejected: new Date().toISOString() }),
-            ...(reason && { rejectionReason: reason })
-        };
 
+document.getElementById("confirmAction")?.addEventListener("click", function() {
+    if (!currentAction || !currentShopId) return;
+    
+    const rejectionInput = document.getElementById("rejectionReason");
+    let reason = null;
 
-    document.getElementById("cancelAction")?.addEventListener("click", function() {
-        const dialog = document.getElementById("confirmationDialog");
-        const overlay = document.getElementById("overlay");
-
-        dialog?.classList.remove("show");
-        overlay?.classList.remove("show");
-
-        currentAction = null;
-        currentRow = null;
-    });
-    // Add rejection reason if this is a rejection
-    if (currentAction === 'reject') {
-        const reasonInput = document.getElementById("rejectionReason");
-        const rejectionReason = reasonInput.value.trim();
-        
-        if (!rejectionReason) {
-            showNotification("Please enter a rejection reason", "error");
+    if (currentAction === "reject") {
+        reason = rejectionInput.value.trim();
+        if (!reason) {
+            showNotification("Please provide a reason for rejection", "error");
+            // Add visual feedback
+            rejectionInput.style.border = "2px solid red";
+            rejectionInput.focus();
+            // Remove the red border after 2 seconds
+            setTimeout(() => {
+                rejectionInput.style.border = "";
+            }, 2000);
             return;
         }
-        
-        updateData.rejectionReason = rejectionReason;
     }
 
+    const shopRef = ref(db, `AR_shoe_users/shop/${currentShopId}`);
+    const updateData = {
+        status: currentAction === "approve" ? "approved" : "rejected",
+        dateProcessed: new Date().toISOString(),  // Update existing dateProcessed
+        ...(currentAction === "approve" && { dateApproved: new Date().toISOString() }),
+        ...(currentAction === "reject" && { dateRejected: new Date().toISOString() }),
+        ...(reason && { rejectionReason: reason })
+    };
+
     update(shopRef, updateData)
-        .then(() => {
-            showNotification(`Shop ${currentAction}ed successfully!`, "success");
-            currentRow?.remove();
-            checkEmptyTable();
-        })
-        .catch((error) => {
-            showNotification(`Failed to ${currentAction} shop: ${error.message}`, "error");
-        })
-        .finally(() => {
-            hideDialog();
-        });
+    .then(() => {
+        showNotification(`Shop ${currentAction}ed successfully!`, "success");
+        currentRow?.remove();
+        checkEmptyTable();
+    })
+    .catch((error) => {
+        showNotification(`Operation failed: ${error.message}`, "error");
+    });
+
+    emailsend_4: {
+        if (currentAction === "reject") {
+            emailjs.init('gBZ5mCvVmgjo7wn0W');
+
+            if (!email) {
+                alert('Please enter a recipient email');
+                return;
+            }
+
+            const templateParams = {
+                email: email,
+                from_name: 'Your App Name',
+                message: rejectionInput.value,
+                reply_to: 'your-default-reply@example.com'
+            };
+
+            emailjs.send('service_8i28mes', 'template_btslatu', templateParams)
+                .then(function (response) {
+                    console.log('Email sent!', response.status, response.text);
+                    showNotification(`Rejection email sent to ${email}`, "success");
+                }, function (error) {
+                    console.error('Failed to send', error);
+                    showNotification(`Email failed: ${error.text}`, "error");
+                });
+        }
+    }
+});
+
+document.getElementById("cancelAction")?.addEventListener("click", function() {
+    const dialog = document.getElementById("confirmationDialog");
+    const overlay = document.getElementById("overlay");
+
+    dialog?.classList.remove("show");
+    overlay?.classList.remove("show");
+
+    currentAction = null;
+    currentRow = null;
 });
 
 // Cancel action handler
@@ -153,12 +183,23 @@ function showNotification(message, type) {
     const notification = document.getElementById('notification');
     if (!notification) return;
     
+    // Reset and set content
     notification.textContent = message;
     notification.className = `notification ${type}`;
-    notification.style.display = 'block';
-
+    
+    // Trigger show animation
     setTimeout(() => {
-        notification.style.display = 'none';
+        notification.classList.add('show');
+    }, 10);
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        
+        // Reset after animation completes
+        setTimeout(() => {
+            notification.className = 'notification';
+        }, 400);
     }, 3000);
 }
 
@@ -365,6 +406,7 @@ function setupSearchListeners() {
     clearSearchBtn?.addEventListener('click', () => {
         searchInput.value = '';
         performSearch('');
+        showNotification("Search filters cleared", "success");
     });
 
     searchInput?.addEventListener('keyup', (e) => {
@@ -443,7 +485,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // Show shop details modal
 function showShopModal(e) {
     e.preventDefault();
-    currentShopId = e.currentTarget.getAttribute('data-id');
+
+    // Get the closest view-link element (in case user clicked the icon)
+    const viewLink = e.target.closest('.view-link');
+    if (!viewLink) return;
+
+    currentShopId = viewLink.getAttribute('data-id');  // Get ID from the link
     const shopRef = ref(db, `AR_shoe_users/shop/${currentShopId}`);
 
     onValue(shopRef, (snapshot) => {
@@ -607,19 +654,6 @@ function renderDocumentItem(url, title) {
     </div>`;
 }
 
-function renderDocumentPreview(url, title) {
-    if (!url) return '<div class="document-item">Document not available</div>';
-    
-    return `
-        <div class="document-item">
-            <div class="document-title">${title}</div>
-            <a href="${url}" target="_blank" class="document-preview">
-                <img src="${url}" alt="${title}">
-            </a>
-        </div>
-    `;
-}
-
 // Add event listeners for modal
 document.getElementById('closeShopModal')?.addEventListener('click', () => {
     document.getElementById('shopDetailsModal').classList.remove('show');
@@ -779,25 +813,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Add to your existing event listeners:
-    tableBody?.addEventListener('click', (e) => {
-        const viewLink = e.target.closest('.view-link');
-        if (viewLink) {
-            e.preventDefault();
-            showShopModal(e);
-        }
-    });
-
-    // Add this event listener for view links
-    document.getElementById('approvedShopsTableBody')?.addEventListener('click', (e) => {
-        const viewLink = e.target.closest('.view-link');
-        if (viewLink) {
-            e.preventDefault();
-            showShopModal(e);
-        }
-    });
-
-
     // Shop rejection function
     function rejectShop(row) {
         const shopId = row.getAttribute("data-id");
@@ -828,20 +843,6 @@ document.addEventListener("DOMContentLoaded", function () {
             setupPagination();
         }, 300);
 
-    }
-
-    // Notification function
-    function showNotification(message, type) {
-        const notification = document.getElementById("notification");
-        if (!notification) return;
-        
-        notification.textContent = message;
-        notification.className = 'notification';
-        notification.classList.add(type, 'show');
-
-        setTimeout(() => {
-            notification.classList.remove("show");
-        }, 3000);
     }
 
     // Initialize pagination
