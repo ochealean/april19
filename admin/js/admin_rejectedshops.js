@@ -27,80 +27,32 @@ const overlay = document.getElementById("overlay");
 document.getElementById("confirmAction")?.addEventListener("click", function() {
     if (!currentAction || !currentShopId) return;
     
-    const rejectionInput = document.getElementById("rejectionReason");
-    let reason = null;
-
-    if (currentAction === "reject") {
-        reason = rejectionInput.value.trim();
-        if (!reason) {
-            showNotification("Please provide a reason for rejection", "error");
-            // Add visual feedback
-            rejectionInput.style.border = "2px solid red";
-            rejectionInput.focus();
-            // Remove the red border after 2 seconds
-            setTimeout(() => {
-                rejectionInput.style.border = "";
-            }, 2000);
-            return;
-        }
-    }
-
     const shopRef = ref(db, `AR_shoe_users/shop/${currentShopId}`);
     const updateData = {
         status: currentAction === "approve" ? "approved" : "rejected",
-        dateProcessed: new Date().toISOString(),  // Update existing dateProcessed
-        ...(currentAction === "approve" && { dateApproved: new Date().toISOString() }),
-        ...(currentAction === "reject" && { dateRejected: new Date().toISOString() }),
-        ...(reason && { rejectionReason: reason })
+        // dateProcessed: new Date().toISOString()
     };
 
     update(shopRef, updateData)
-    .then(() => {
-        showNotification(`Shop ${currentAction}ed successfully!`, "success");
-        currentRow?.remove();
-        checkEmptyTable();
-        hideDialog();
-    })
-    .catch((error) => {
-        showNotification(`Operation failed: ${error.message}`, "error");
-        hideDialog();
-    });
-
-    emailsend_4: {
-        if (currentAction === "reject") {
-            emailjs.init('gBZ5mCvVmgjo7wn0W');
-
-            if (!email) {
-                alert('Please enter a recipient email');
-                return;
-            }
-
-            const templateParams = {
-                email: email,
-                from_name: 'Your App Name',
-                message: rejectionInput.value,
-                reply_to: 'your-default-reply@example.com'
-            };
-
-            emailjs.send('service_8i28mes', 'template_btslatu', templateParams)
-                .then(function (response) {
-                    console.log('Email sent!', response.status, response.text);
-                    showNotification(`Rejection email sent to ${email}`, "success");
-                }, function (error) {
-                    console.error('Failed to send', error);
-                    showNotification(`Email failed: ${error.text}`, "error");
-                });
-        }
-    }
+        .then(() => {
+            showNotification(`Shop ${currentAction}ed successfully!`, "success");
+            currentRow?.remove();
+            checkEmptyTable();
+        })
+        .catch((error) => {
+            showNotification(`Failed to ${currentAction} shop: ${error.message}`, "error");
+        })
+        .finally(() => {
+            hideDialog();
+        });
 });
 
 // Cancel action handler
 document.getElementById("cancelAction")?.addEventListener("click", hideDialog);
 
 function hideDialog() {
-    document.getElementById("confirmationDialog")?.classList.remove("show");
-    document.getElementById("overlay")?.classList.remove("show");
-    document.getElementById("rejectionReason").value = ''; // Clear the reason input
+    dialog?.classList.remove("show");
+    overlay?.classList.remove("show");
     currentAction = null;
     currentRow = null;
     currentShopId = null;
@@ -109,7 +61,7 @@ function hideDialog() {
 function checkEmptyTable() {
     const tbody = document.querySelector('tbody');
     if (tbody && tbody.querySelectorAll('tr').length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No rejected shops remaining</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">No pending shops remaining</td></tr>';
     }
 }
 
@@ -136,29 +88,20 @@ function updateDialogContent(shop, actionType) {
     const dialogMessage = document.getElementById("dialogMessage");
     const confirmBtn = document.getElementById("confirmAction");
     const confirmIcon = confirmBtn.querySelector('i');
-    const reasonContainer = document.getElementById("rejectionReasonContainer");
-    const reasonInput = document.getElementById("rejectionReason");
-
+    const actionText = confirmBtn.querySelector('.action-text');
+    
     const username = shop.username || 'N/A';
     const shopName = shop.shopName || 'Unknown Shop';
 
     dialogMessage.textContent = `Are you sure you want to ${actionType} "${shopName}" (${username})?`;
     
-    // Show/hide reason input based on action type
-    if (actionType === 'reject') {
-        reasonContainer.style.display = 'block';
-        reasonInput.value = ''; // Clear previous input
-        reasonInput.required = true; // Make it required if you want
-    } else {
-        reasonContainer.style.display = 'none';
-        reasonInput.required = false;
-    }
-
     if (actionType === 'approve') {
         confirmIcon.className = 'fas fa-check';
+        actionText.textContent = 'Approve';
         confirmBtn.className = 'approve-btn';
     } else {
         confirmIcon.className = 'fas fa-ban';
+        actionText.textContent = 'Reject';
         confirmBtn.className = 'reject-btn';
     }
 }
@@ -170,35 +113,56 @@ function showDialog() {
 
 function showNotification(message, type) {
     const notification = document.getElementById('notification');
-    if (!notification) {
-        console.error('Notification element not found');
-        return;
-    }
+    if (!notification) return;
     
-    // Reset and set content
     notification.textContent = message;
     notification.className = `notification ${type}`;
-    
-    // Trigger show animation
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
+    notification.style.display = 'block';
 
-    // Auto-hide after 3 seconds
     setTimeout(() => {
-        notification.classList.remove('show');
-        
-        // Reset after animation completes
-        setTimeout(() => {
-            notification.className = 'notification';
-        }, 400);
+        notification.style.display = 'none';
     }, 3000);
 }
+
+// Load shops functions (simplified example)
+// function loadShops(status, tableBodyId) {
+//     const shopsRef = ref(db, 'AR_shoe_users/shop');
+//     const tbody = document.getElementById(tableBodyId);
+    
+//     if (!tbody) return;
+
+//     onValue(shopsRef, (snapshot) => {
+//         tbody.innerHTML = '';
+        
+//         if (!snapshot.exists()) {
+//             tbody.innerHTML = `<tr><td colspan="7">No shops found</td></tr>`;
+//             return;
+//         }
+
+//         let hasShops = false;
+//         snapshot.forEach((childSnapshot) => {
+//             const shop = childSnapshot.val();
+//             if (shop.status === status) {
+//                 hasShops = true;
+//                 const row = createShopRow(childSnapshot.key, shop, status);
+//                 tbody.appendChild(row);
+//             }
+//         });
+
+//         if (!hasShops) {
+//             tbody.innerHTML = `<tr><td colspan="7">No ${status} shops found</td></tr>`;
+//         }
+//     });
+// }
 
 function createShopRow(shopId, shop, status) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
     row.setAttribute('data-id', shopId);
+
+    const maxLength = 10; // Set your desired character limit
+    const reasonText = shop.rejectionReason || 'No reason provided';
+    const shortenedText = reasonText.length > maxLength ? reasonText.substring(0, maxLength) + '...' : reasonText;
 
     // Basic row content - customize as needed
     row.innerHTML = `
@@ -206,9 +170,9 @@ function createShopRow(shopId, shop, status) {
         <td>${shop.shopName || 'N/A'}</td>
         <td>${shop.ownerName || 'N/A'}</td>
         <td>${shop.email || 'N/A'}</td>
-        <td><a href="#" class="view-link" data-id="${shopId}"><i class="fas fa-eye"></i> View</a></td>        
-        <td>${shop.dateApproved ? formatDisplayDate(shop.dateProcessed) : 'Pending'}</td>
-        ${status === 'rejected' ? `<td>${shop.rejectionReason}</td>` : ''}
+        <td><a href="#" class="view-link"><i class="fas fa-eye"></i> View</a></td>
+        <td>${shop.dateProcessed || 'Pending'}</td>
+        <td title="${shop.rejectionReason}">${shortenedText || 'No reason'}</td>
         <td>
             ${status === 'pending' ? 
                 `<button class="approve-btn" data-id="${shopId}"><i class="fas fa-check"></i> Approve</button>
@@ -220,205 +184,12 @@ function createShopRow(shopId, shop, status) {
     `;
 
     // Add event listeners
-    row.querySelector('.view-link')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showShopModal(e);
-    });
     row.querySelector('.approve-btn')?.addEventListener('click', (e) => showConfirmationDialog(e, 'approve'));
     row.querySelector('.reject-btn')?.addEventListener('click', (e) => showConfirmationDialog(e, 'reject'));
 
     return row;
 }
 
-// Show shop details modal
-function showShopModal(e) {
-    e.preventDefault();
-
-    // Get the closest view-link element (in case user clicked the icon)
-    const viewLink = e.target.closest('.view-link');
-    if (!viewLink) return;
-
-    currentShopId = viewLink.getAttribute('data-id');  // Get ID from the link
-    const shopRef = ref(db, `AR_shoe_users/shop/${currentShopId}`);
-
-    onValue(shopRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const shop = snapshot.val();
-            // Add deep fallbacks
-            const safeShop = {
-                ...shop,
-                uploads: shop.uploads || {
-                    frontSideID: { url: '' },
-                    backSideID: { url: '' },
-                    licensePreview: { url: '' },
-                    permitDocument: { url: '' }
-                },
-                shopCategory: shop.shopCategory || 'N/A',
-                shopAddress: shop.shopAddress || 'N/A',
-                ownerPhone: shop.ownerPhone || '',
-                shopCity: shop.shopCity || '',
-                shopState: shop.shopState || '',
-                shopCountry: shop.shopCountry || '',
-                shopZip: shop.shopZip || ''
-            };
-            updateShopModalContent(safeShop);
-            document.getElementById('shopDetailsModal').classList.add('show');
-            document.getElementById('overlay').classList.add('show');
-        } else {
-            showNotification("Shop data not found", "error");
-        }
-    }, { onlyOnce: true });
-}
-
-function updateShopModalContent(shop) {
-    const modalContent = document.getElementById('modalShopContent');
-    const getDocUrl = (doc) => shop.uploads[doc]?.url || 'no-document.png';
-
-    modalContent.innerHTML = `
-        <div class="modal-section">
-            <h3>Basic Information</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Shop ID: </span>
-                    <span class="info-value">${currentShopId}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Shop Name: </span>
-                    <span class="info-value">${shop.shopName || 'N/A'}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Category: </span>
-                    <span class="info-value">${shop.shopCategory || 'N/A'}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Description: </span>
-                    <span class="info-value">${shop.shopDescription || 'N/A'}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-section">
-            <h3>Owner Information</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Name: </span>
-                    <span class="info-value">${shop.ownerName || 'N/A'}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Email: </span>
-                    <span class="info-value">${shop.email || 'N/A'}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Phone: </span>
-                    <span class="info-value">${shop.ownerPhone ? '+63 ' + shop.ownerPhone : 'N/A'}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-section">
-            <h3>Location Details</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Address: </span>
-                    <span class="info-value">${[
-            shop.shopAddress,
-            shop.shopCity,
-            shop.shopState,
-            shop.shopCountry
-        ].filter(Boolean).join(', ') || 'N/A'}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">ZIP Code: </span>
-                    <span class="info-value">${shop.shopZip || 'N/A'}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-section">
-            <h3>Business Documents</h3>
-            <div class="document-grid">
-                ${renderDocumentItem(getDocUrl('frontSideID'), 'Front ID')}
-                ${renderDocumentItem(getDocUrl('backSideID'), 'Back ID')}
-                ${renderDocumentItem(getDocUrl('licensePreview'), 'Business License')}
-                ${renderDocumentItem(getDocUrl('permitDocument'), 'Permit')}
-            </div>
-        </div>
-
-        <div class="modal-section">
-            <h3>Timestamps</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Registration Date: </span>
-                    <span class="info-value">${formatDisplayDate(shop.dateProcessed) || 'N/A'}</span>
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'approved' ? `
-                        <span class="info-label">Approval Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateApproved)}</span>
-                    ` : ''}
-                    
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Rejection Date: </span>
-                        <span class="info-value">${formatDisplayDate(shop.dateRejected)}</span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-label">Reason for Being Rejected: </span>
-                    ` : ''}
-                </div>
-                <div class="info-item">
-                    ${shop.status === 'rejected' ? `
-                        <span class="info-value">${shop.rejectionReason}</span>
-                    ` : ''}
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// format ng date and time
-function formatDisplayDate(isoString) {
-    if (!isoString) return 'N/A';
-    
-    const date = new Date(isoString);
-    if (isNaN(date)) return 'Invalid Date';
-
-    // Format time (1:19 AM)
-    const timeString = date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-    });
-
-    // Format date (April 19, 2025)
-    const month = date.toLocaleString('default', { month: 'long' });
-    const day = date.getDate();
-    const year = date.getFullYear();
-
-    return `${timeString} ${month} ${day}, ${year}`;
-}
-
-// Add helper function
-function renderDocumentItem(url, title) {
-    return `
-    <div class="document-item">
-        <div class="document-title">${title}</div>
-        <a href="${url}" target="_blank" class="document-preview">
-            <img src="${url}" alt="${title}" 
-                 onerror="this.onerror=null;this.src='no-document.png'">
-        </a>
-    </div>`;
-}
-
-document.getElementById('closeShopModal')?.addEventListener('click', () => {
-    document.getElementById('shopDetailsModal').classList.remove('show');
-    document.getElementById('overlay').classList.remove('show');
-});
-
-document.getElementById('overlay')?.addEventListener('click', () => {
-    document.getElementById('shopDetailsModal').classList.remove('show');
-});
   
 
 // -----------------------------------------add from macmac code---------------------------------------------------
@@ -430,21 +201,16 @@ document.getElementById('overlay')?.addEventListener('click', () => {
     const paginationContainer = document.querySelector(".pagination");
 
     function updateTableDisplay() {
-        if (!tableBody) return; // Guard clause
+        if (!tableBody) return;
+        
         const rows = tableBody.querySelectorAll("tr");
+        if (rows.length === 0) return;
+        
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
 
         rows.forEach((row, index) => {
-            // Hide row by default
-            row.classList.remove("show");
-            row.style.display = 'none'; // Use style.display for hiding/showing
-
-            // Show row if it's within the current page range
-            if (index >= startIndex && index < endIndex) {
-                row.classList.add("show");
-                row.style.display = ''; // Reset to default display (table-row)
-            }
+            row.style.display = (index >= startIndex && index < endIndex) ? '' : 'none';
         });
     }
 
@@ -844,28 +610,28 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             // Confirmation dialog buttons
-            // document.getElementById("confirmAction")?.addEventListener("click", function() {
-            //     const dialog = document.getElementById("confirmationDialog");
-            //     const overlay = document.getElementById("overlay");
+            document.getElementById("confirmAction")?.addEventListener("click", function() {
+                const dialog = document.getElementById("confirmationDialog");
+                const overlay = document.getElementById("overlay");
 
-            //     dialog?.classList.remove("show");
-            //     overlay?.classList.remove("show");
+                dialog?.classList.remove("show");
+                overlay?.classList.remove("show");
 
-            //     if (currentAction === "approve" && currentRow) {
-            //         approveShop(currentRow);
-            //     }
+                if (currentAction === "approve" && currentRow) {
+                    approveShop(currentRow);
+                }
 
-            //     currentAction = null;
-            //     currentRow = null;
-            // });
+                currentAction = null;
+                currentRow = null;
+            });
 
             document.getElementById("cancelAction")?.addEventListener("click", function() {
                 const dialog = document.getElementById("confirmationDialog");
                 const overlay = document.getElementById("overlay");
-            
+
                 dialog?.classList.remove("show");
                 overlay?.classList.remove("show");
-            
+
                 currentAction = null;
                 currentRow = null;
             });

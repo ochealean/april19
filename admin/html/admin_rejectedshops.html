@@ -14,25 +14,9 @@
     <!-- Confirmation Dialog -->
     <div id="confirmationDialog" class="confirmation-dialog">
         <p id="dialogMessage">Are you sure you want to perform this action?</p>
-        <div id="rejectionReasonContainer" style="display: none; margin: 10px 0;">
-            <textarea id="rejectionReason" placeholder="Enter rejection reason..." cols="50" rows="5" class="rejection-reason"></textarea>
-        </div>
         <div class="confirmation-buttons">
             <button id="cancelAction" class="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
-            <button id="confirmAction" class="reject-btn"><i class="fas fa-check"></i> <span class="action-text">Confirm</span></button>
-        </div>
-    </div>
-
-    <!-- Shop Details Modal -->
-    <div id="shopDetailsModal" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalShopName">Shop Details</h2>
-                <button id="closeShopModal" class="close-modal">&times;</button>
-            </div>
-            <div id="modalShopContent" class="modal-body">
-                <!-- Dynamic content will load here -->
-            </div>
+            <button id="confirmAction" class="approve-btn"><i class="fas fa-check"></i> <span class="action-text">Confirm</span></button>
         </div>
     </div>
 
@@ -103,6 +87,6 @@
         </div>
     </div>
 
-    <script src="/admin/js/admin_rejectedshops.js" type="module"></script>
+    <script src="admin_rejectedshops.js" type="module"></script>
 </body>
 </html>
