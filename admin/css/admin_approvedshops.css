@@ -54,7 +54,7 @@ nav {
     padding: 0 15px;
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 800;
     transition: all 0.3s ease;
 }
 
@@ -496,7 +496,26 @@ button:hover::before {
     content: '\f06a';
 }
 
-/* Confirmation Dialog - Enhanced with modal animation */
+/* Rejection Reason Textarea */
+.rejection-reason {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--gray);
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    resize: vertical;
+    min-height: 100px;
+    transition: var(--transition);
+}
+
+.rejection-reason:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+
+/* Confirmation Dialog - Common to all pages */
 .confirmation-dialog {
     position: fixed;
     top: 50%;
@@ -558,7 +577,7 @@ button:hover::before {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 100;
+    z-index: 999;
     opacity: 0;
     visibility: hidden;
     transition: var(--transition);

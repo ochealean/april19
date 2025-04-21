@@ -128,7 +128,7 @@ document.getElementById('addEmployeeForm').addEventListener('submit', async (e) 
         email: document.getElementById('employeeEmail').value.trim(),
         role: document.getElementById('employeeRole').value,
         phone: document.getElementById('employeePhone').value.trim(),
-        password: generateRandomPassword()
+        password: document.getElementById('employeePassword').value.trim()
     };
 
     try {
@@ -170,4 +170,11 @@ onAuthStateChanged(auth, (user) => {
             console.error("Error setting UID:", error);
         }
     }
+});
+
+// Logout functionality
+document.getElementById('logout_btn')?.addEventListener('click', () => {
+    auth.signOut().then(() => {
+        window.location.href = '/user_login.html';
+    });
 });

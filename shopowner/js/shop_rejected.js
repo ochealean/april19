@@ -25,10 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     const reasonsList = document.getElementById('rejectionReasonsList');
 
-    if (!userId || !shopId) {
-        window.location.href = '/shopowner/html/shopowner_login.html';
-        return;
-    }
+    // if (!userId || !shopId) {
+    //     window.location.href = '/user_login.html';
+    //     // walang ganyan
+    //     // window.location.href = '/shopowner/html/shopowner_login.html';
+    //     return;
+    // }
 
     // Load rejection reasons
     const shopRef = ref(db, `AR_shoe_users/shop/${shopId}`);
@@ -57,14 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Logout button
-    logoutBtn.addEventListener('click', () => {
-        signOut(auth).then(() => {
-            localStorage.removeItem('userId');
-            localStorage.removeItem('shopId');
-            localStorage.removeItem('userRole');
-            window.location.href = '/shopowner/html/shopowner_login.html';
-        }).catch((error) => {
-            console.error("Logout error:", error);
-        });
-    });
+    // logoutBtn.addEventListener('click', () => {
+    //     signOut(auth).then(() => {
+    //         localStorage.removeItem('userId');
+    //         localStorage.removeItem('shopId');
+    //         localStorage.removeItem('userRole');
+    //         window.location.href = '/shopowner/html/shopowner_login.html';
+    //     }).catch((error) => {
+    //         console.error("Logout error:", error);
+    //     });
+    // });
 });

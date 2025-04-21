@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js"; // Added get import
+import { getAuth, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAuPALylh11cTArigeGJZmLwrFwoAsNPSI",
@@ -13,165 +13,54 @@ const firebaseConfig = {
     measurementId: "G-QC2JSR1FJW"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase(app);
+const db = getDatabase(app); // Initialize database
 
-let shopLoggedin;
-
-// Expose functions to global scope
-window.viewShoeDetails = viewShoeDetails;
-
-onAuthStateChanged(auth, (user) => {
+// Function to load shop data
+async function loadShopData() {
+    const user = auth.currentUser ;
     if (user) {
-        shopLoggedin = user.uid;
-        console.log("Authenticated as shop owner:", shopLoggedin);
-        loadShopDashboard();
-    } else {
-        window.location.href = "/user_login.html";
-    }
-});
-
-function loadShopDashboard() {
-    loadShopStats();
-    loadRecentProducts();
-}
-
-function loadShopStats() {
-    const shoesRef = ref(db, `AR_shoe_users/shoe/${shopLoggedin}`);
-    
-    onValue(shoesRef, (snapshot) => {
+        const shopRef = ref(db, `AR_shoe_users/shop/${user.uid}`);
+        const snapshot = await get(shopRef);
         if (snapshot.exists()) {
-            const shoes = [];
-            snapshot.forEach((childSnapshot) => {
-                shoes.push(childSnapshot.val());
-            });
-            
-            // Update stats cards
-            updateStatsCards(shoes);
-        }
-    });
-}
-
-function updateStatsCards(shoes) {
-    // Calculate total products
-    const totalProducts = shoes.length;
-    const productsElement = document.querySelector('.stats-grid .stat-card:nth-child(3) .value');
-    if (productsElement) productsElement.textContent = totalProducts;
-    
-    // Calculate total stock
-    let totalStock = 0;
-    shoes.forEach(shoe => {
-        if (shoe.variants) {
-            shoe.variants.forEach(variant => {
-                if (variant.sizes) {
-                    variant.sizes.forEach(size => {
-                        totalStock += parseInt(size.stock) || 0;
-                    });
-                }
-            });
-        }
-    });
-    
-    // Update the stock card if you have one
-    const stockElement = document.querySelector('.stats-grid .stat-card:nth-child(4) .value');
-    if (stockElement) stockElement.textContent = totalStock;
-}
-
-function loadRecentProducts() {
-    const shoesRef = ref(db, `AR_shoe_users/shoe/${shopLoggedin}`);
-    const recentAddedContainer = document.getElementById('recentAdded');
-    
-    onValue(shoesRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const shoes = [];
-            snapshot.forEach((childSnapshot) => {
-                const shoe = childSnapshot.val();
-                shoe.id = childSnapshot.key; // Add the ID to the shoe object
-                shoes.push(shoe);
-            });
-            
-            // Sort by dateAdded (newest first) and get top 4
-            const recentShoes = shoes.sort((a, b) => {
-                return new Date(b.dateAdded) - new Date(a.dateAdded);
-            }).slice(0, 4);
-            
-            displayRecentProducts(recentShoes, recentAddedContainer);
+            const shopData = snapshot.val();
+            populateShopForm(shopData);
         } else {
-            if (recentAddedContainer) {
-                recentAddedContainer.innerHTML = '<p>No shoes added yet</p>';
-            }
+            console.error("No shop data found.");
         }
-    });
-}
-
-function displayRecentProducts(shoes, container) {
-    if (!container) return;
-    
-    if (shoes.length === 0) {
-        container.innerHTML = '<p>No shoes added yet</p>';
-        return;
+    } else {
+        console.error("User  not authenticated.");
     }
-    
-    let html = '<div class="product-list">';
-    
-    shoes.forEach(shoe => {
-        // Get first variant for display
-        const firstVariant = shoe.variants && shoe.variants[0] ? shoe.variants[0] : null;
-        const price = firstVariant ? `$${firstVariant.price}` : '$0.00';
-        const color = firstVariant ? firstVariant.color : 'No color';
-        const imageUrl = shoe.defaultImage || (firstVariant ? firstVariant.imageUrl : null);
-        
-        html += `
-        <div class="product-card">
-            <div class="product-image">
-                ${imageUrl ? 
-                    `<img src="${imageUrl}" alt="${shoe.shoeName}" class="shoe-thumbnail">` : 
-                    '<div class="no-image">No Image</div>'}
-            </div>
-            <div class="product-info">
-                <div class="product-title">${shoe.shoeName || 'No Name'}</div>
-                <div class="product-code">Code: ${shoe.shoeCode || 'N/A'}</div>
-                <div class="product-price">${price}</div>
-                <div class="product-color">${color}</div>
-                <button class="btn btn-view" onclick="viewShoeDetails('${shoe.id}')">
-                    <i class="fas fa-eye"></i> View
-                </button>
-            </div>
-        </div>
-        `;
-    });
-    
-    html += '</div>';
-    container.innerHTML = html;
 }
 
-function viewShoeDetails(shoeId) {
-    // Store the shoe ID to view details on inventory page
-    localStorage.setItem('viewingShoeId', shoeId);
-    window.location.href = '/shopowner/html/shop_inventory.html';
+// Function to populate the shop registration form
+function populateShopForm(shopData) {
+    // Assuming you have input fields in shop_registration.html with these IDs
+    document.getElementById('shop-name').value = shopData.name || '';
+    document.getElementById('shop-email').value = shopData.email || '';
+    document.getElementById('shop-description').value = shopData.description || '';
+    // Add more fields as necessary
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Role-based access control
-    const userRole = localStorage.getItem('userRole');
-    if (userRole === "employee") {
-        document.querySelectorAll(".manager, .shopowner").forEach(el => el.style.display = "none");
-    } else if (userRole === "manager") {
-        document.querySelectorAll(".shopowner").forEach(el => el.style.display = "none");
-    }
+// Event listener for the reapply button
+document.getElementById('reapplyBtn').addEventListener('click', async () => {
+    await loadShopData();
+    window.location.href = "/shopowner/html/shop_registration.html"; // Redirect to registration page
+});
 
-    // Search functionality for inventory if on that page
-    const searchInput = document.getElementById('searchInventory');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            document.querySelectorAll('#inventoryTable tbody tr').forEach(row => {
-                const name = row.children[1]?.textContent.toLowerCase() || '';
-                const code = row.children[2]?.textContent.toLowerCase() || '';
-                row.style.display = (name.includes(term) || code.includes(term)) ? '' : 'none';
-            });
-        });
+// Event listener for the logout button
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+        await signOut(auth);
+        alert("You have been logged out successfully.");
+        window.location.href = "/user_login.html"; // Redirect to login page
+    } catch (error) {
+        console.error("Error logging out:", error);
+        alert("An error occurred while logging out. Please try again.");
     }
 });
+
+// Call loadShopData when the script loads
+loadShopData();

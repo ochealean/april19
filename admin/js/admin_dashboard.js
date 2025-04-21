@@ -36,7 +36,8 @@ const cancelLogout = document.getElementById('cancelLogout');
 const confirmLogout = document.getElementById('confirmLogout');
 const modal = document.getElementById("ModalDialog");
 
-// --- Utility Functions ---
+/* UTILITY FUNCTIONS */
+// Checks if a table is empty and displays a message if no rows are present
 function checkEmptyTable() {
     const tbody = document.querySelector('tbody');
     if (tbody && tbody.querySelectorAll('tr').length === 0) {
@@ -44,6 +45,9 @@ function checkEmptyTable() {
     }
 }
 
+//  Displays a notification message
+//  @param {string} message - The text to display
+//  @param {string} type - The notification type (success/error)
 function showNotification(message, type) {
     const notification = document.getElementById('notification');
     if (!notification) {
@@ -71,7 +75,10 @@ function showNotification(message, type) {
     }, 3000);
 }
 
-
+// Updates confirmation dialog content based on action type
+// @param {Object} shop - Shop data object
+// @param {string} actionType - 'approve' or 'reject'
+// @param {HTMLElement} currentRow - The table row being acted upon
 function updateDialogContent(shop, actionType, currentRow) {
     const dialogMessage = document.getElementById("dialogMessage");
     const confirmBtn = document.getElementById("confirmAction");
@@ -103,18 +110,13 @@ function updateDialogContent(shop, actionType, currentRow) {
     }
 }
 
+// Shows the confirmation dialog and overlay
 function showDialog() {
     dialog?.classList.add("show");
     overlay?.classList.add("show");
 }
 
-// supposedly 2 dapat yung balak ko dati showDialog and showModal pero pinagisa na lang ni deepseek kaya useless na to
-// yung modal feeling ko wala na sya gamit kasi eto na id nya --> shopDetailsModal
-// function showModalfunc() {
-//     modal?.classList.add("show");
-//     overlay?.classList.add("show");
-// }
-
+// Hides all dialogs and resets state
 function hideDialog() {
     document.getElementById('shopDetailsModal')?.classList.remove('show');
     dialog?.classList.remove("show");
@@ -125,7 +127,9 @@ function hideDialog() {
     currentShopId = null;
 }
 
-// Show shop details modal
+/* SHOP DETAILS MODAL FUNCTIONS */
+// Shows the shop details modal and loads data from Firebase
+// @param {Event} e - Click event
 function showShopModal(e) {
     e.preventDefault();
 
@@ -165,7 +169,8 @@ function showShopModal(e) {
     }, { onlyOnce: true });
 }
 
-// Update modal content
+// Updates modal content with shop details
+// @param {Object} shop - Complete shop data object
 function updateShopModalContent(shop) {
     const modalContent = document.getElementById('modalShopContent');
     const getDocUrl = (doc) => shop.uploads[doc]?.url || 'no-document.png';
@@ -258,12 +263,24 @@ function updateShopModalContent(shop) {
                         <span class="info-value">${formatDisplayDate(shop.dateRejected)}</span>
                     ` : ''}
                 </div>
+                <div class="info-item">
+                    ${shop.status === 'rejected' ? `
+                        <span class="info-label">Reason for Being Rejected: </span>
+                    ` : ''}
+                </div>
+                <div class="info-item">
+                    ${shop.status === 'rejected' ? `
+                        <span class="info-value">${shop.rejectionReason}</span>
+                    ` : ''}
+                </div>
             </div>
         </div>
     `;
 }
 
-// format ng date and time
+// Formats ISO date string to readable format
+// @param {string} isoString - ISO date string
+// @returns {string} Formatted date string
 function formatDisplayDate(isoString) {
     if (!isoString) return 'N/A';
 
@@ -285,6 +302,10 @@ function formatDisplayDate(isoString) {
     return `${timeString} ${month} ${day}, ${year}`;
 }
 
+// Creates HTML for document preview items
+// @param {string} url - Document URL
+// @param {string} title - Document title
+// @returns {string} HTML string for document item
 function renderDocumentItem(url, title) {
     return `
     <div class="document-item">
@@ -296,7 +317,10 @@ function renderDocumentItem(url, title) {
     </div>`;
 }
 
-// --- Shop Management Functions ---
+/* SHOP MANAGEMENT FUNCTIONS */
+// * Shows confirmation dialog for approve/reject actions
+// * @param {Event} e - Click event
+// * @param {string} actionType - 'approve' or 'reject'
 function showConfirmationDialog(e, actionType) {
     e.preventDefault();
     currentShopId = e.currentTarget.getAttribute('data-id');
@@ -318,7 +342,11 @@ function showConfirmationDialog(e, actionType) {
     }, { onlyOnce: true });
 }
 
-// ito yung nagdidisplay or nagloload ng value mula firebase into html, kumbaga sya yung kumukuha ng lahat ng values sa database at ididisplay nya sa html
+// ito yung nagdidisplay or nagloload ng value mula firebase into html, 
+// kumbaga sya yung kumukuha ng lahat ng values sa database at ididisplay nya sa html
+// Loads shops from Firebase and populates table
+// @param {string} status - Shop status (pending/approved/rejected)
+// @param {string} tableBodyId - ID of target table body
 function loadShops(status, tableBodyId) {
     const shopsRef = ref(db, 'AR_shoe_users/shop');
     const tbody = document.getElementById(tableBodyId);
@@ -350,6 +378,11 @@ function loadShops(status, tableBodyId) {
 }
 
 // ito yung makikita sa loadShops()
+// Creates a table row for shop data
+// @param {string} shopId - Firebase shop ID
+// @param {Object} shop - Shop data object
+// @param {string} status - Current shop status
+// @returns {HTMLElement} Table row element
 function createShopRow(shopId, shop, status) {
     const row = document.createElement('tr');
     row.className = 'animate-fade';
@@ -384,8 +417,9 @@ function createShopRow(shopId, shop, status) {
     return row;
 }
 
-// --- Event Listeners ---
+/* EVENT HANDLERS */
 // nandito lahat ng function
+// Initializes all event listeners
 function initializeEventListeners() {
     document.getElementById('closeShopModal')?.addEventListener('click', function () {
         document.getElementById('shopDetailsModal').classList.remove('show');
